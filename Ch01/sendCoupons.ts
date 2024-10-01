@@ -124,4 +124,87 @@ async function main() {
   }
 }
 
-main();
+// ------------------------------------------------------------------------------
+
+// 위 코드에서 불편한 점.
+// 1. main을 실행하기 전까지 누가 어떤 쿠폰을 받는지 확인할 수 없음. -> 누구에게 어떤 쿠폰을 보낼것인지 함수로 만들어놓으면 테스트하기 좋음.
+// 2. targetCoupons의 구현이 중복됨. -> 함수로 빼서 중복을 제거.
+
+function getCouponsByRank({
+  coupons,
+  rank,
+}: {
+  coupons: Coupon[];
+  rank: COUPON_RANK;
+}) {
+  return coupons.filter((coupon) => coupon.rank === rank);
+}
+
+type Mail = {
+  from: string;
+  to: string;
+  coupons: string[];
+};
+
+// 구독자 한 명이 받을 이메일 내용을 만드는 함수
+function makeMail({
+  subscriber,
+  goodCoupons,
+  bestCoupons,
+}: {
+  subscriber: Subscriber;
+  goodCoupons: Coupon[];
+  bestCoupons: Coupon[];
+}): Mail {
+  const targetCoupons =
+    subscriber.recommendCount >= 10 ? bestCoupons : goodCoupons;
+
+  return {
+    from: "Me",
+    to: subscriber.name,
+    coupons: targetCoupons.map((coupon) => coupon.name),
+  };
+}
+
+// 모든 구독자들에게 보낼 이메일 목록을 만드는 함수
+function makeMails({
+  subscribers,
+  goodCoupons,
+  bestCoupons,
+}: {
+  subscribers: Subscriber[];
+  goodCoupons: Coupon[];
+  bestCoupons: Coupon[];
+}) {
+  return subscribers.map((subscriber) =>
+    makeMail({ subscriber, goodCoupons, bestCoupons })
+  );
+}
+
+async function sendMail2(mails: Mail[]) {
+  for await (const mail of mails) {
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(
+          `${mail.from}님이 ${mail.to}님께 ${mail.coupons
+            .map((coupon) => coupon)
+            .join(", ")}쿠폰을 보냈습니다.`
+        );
+        resolve(undefined);
+      }, 1000);
+    });
+  }
+}
+
+// 함수형 사고 적용
+async function main2() {
+  const coupons = await fetchCoupons();
+  const subscribers = await fetchSubscribers();
+  const bestCoupons = getCouponsByRank({ coupons, rank: COUPON_RANK.BEST });
+  const goodCoupons = getCouponsByRank({ coupons, rank: COUPON_RANK.GOOD });
+  const mails = makeMails({ subscribers, goodCoupons, bestCoupons }); // 이메일을 보낼 전체 목록을 만듦으로써 실제로 메일을 보내지 않아도 테스트하기 쉬워짐.
+  //   console.log(mails);
+  await sendMail2(mails);
+}
+
+main2();
