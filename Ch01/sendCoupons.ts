@@ -1,0 +1,127 @@
+/**
+ * 구독자들에게 쿠폰을 보내주는 기능.
+ * 구독자의 친구 추천 수에 따라 보내주는 쿠폰의 등급이 다름.
+ * 1. 추천 수가 10명 이상일 경우에는 BEST 등급의 쿠폰을 보내줌.
+ * 2. 그렇지 않을 경우에는 GOOD 등급의 쿠폰을 보내줌.
+ * 쿠폰은 NORMAL, GOOD, BEST 등급이 있음.
+ * NORMAL 등급의 쿠폰은 구독자들에게 보내주지 않음.
+ */
+
+enum COUPON_RANK {
+  NORMAL,
+  GOOD,
+  BEST,
+}
+
+type Coupon = {
+  name: string;
+  rank: COUPON_RANK;
+};
+
+type Subscriber = {
+  name: string;
+  recommendCount: number;
+};
+
+const COUPON_DB: Coupon[] = [
+  { name: "Coupang", rank: COUPON_RANK.GOOD },
+  { name: "11st", rank: COUPON_RANK.BEST },
+  { name: "Gmarket", rank: COUPON_RANK.GOOD },
+  { name: "Musinsa", rank: COUPON_RANK.NORMAL },
+  { name: "Samsung", rank: COUPON_RANK.BEST },
+  { name: "Apple", rank: COUPON_RANK.GOOD },
+  { name: "Xiaomi", rank: COUPON_RANK.NORMAL },
+  { name: "Microsoft", rank: COUPON_RANK.BEST },
+  { name: "Amazon", rank: COUPON_RANK.GOOD },
+  { name: "Nvidia", rank: COUPON_RANK.BEST },
+  { name: "SSG", rank: COUPON_RANK.GOOD },
+  { name: "Naver", rank: COUPON_RANK.NORMAL },
+  { name: "Kakao", rank: COUPON_RANK.BEST },
+  { name: "Benz", rank: COUPON_RANK.GOOD },
+  { name: "Coca-cola", rank: COUPON_RANK.NORMAL },
+  { name: "Nike", rank: COUPON_RANK.BEST },
+  { name: "McDonald", rank: COUPON_RANK.GOOD },
+  { name: "Intel", rank: COUPON_RANK.BEST },
+  { name: "Tesla", rank: COUPON_RANK.GOOD },
+  { name: "Google", rank: COUPON_RANK.NORMAL },
+];
+
+const SUBSCRIBER_DB: Subscriber[] = [
+  { name: "김철수", recommendCount: 5 },
+  { name: "이영희", recommendCount: 12 },
+  { name: "박민수", recommendCount: 8 },
+  { name: "최지우", recommendCount: 15 },
+  { name: "정수현", recommendCount: 3 },
+  { name: "한지민", recommendCount: 20 },
+  { name: "카리나", recommendCount: 7 },
+  { name: "신동엽", recommendCount: 11 },
+  { name: "유재석", recommendCount: 9 },
+  { name: "강호동", recommendCount: 13 },
+  { name: "김혜수", recommendCount: 6 },
+  { name: "송중기", recommendCount: 14 },
+  { name: "전지현", recommendCount: 4 },
+  { name: "이병헌", recommendCount: 10 },
+  { name: "김태희", recommendCount: 2 },
+  { name: "장동건", recommendCount: 18 },
+  { name: "원빈", recommendCount: 1 },
+  { name: "이준기", recommendCount: 16 },
+  { name: "수지", recommendCount: 19 },
+  { name: "아이유", recommendCount: 17 },
+];
+
+async function fetchCoupons(): Promise<Coupon[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(COUPON_DB);
+    }, 1000);
+  });
+}
+
+async function fetchSubscribers(): Promise<Subscriber[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(SUBSCRIBER_DB);
+    }, 1000);
+  });
+}
+
+async function sendMail({
+  subscriber,
+  targetCoupons,
+}: {
+  subscriber: Subscriber;
+  targetCoupons: Coupon[];
+}) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log(
+        `${subscriber.name}님께 ${targetCoupons
+          .map((coupon) => coupon.name)
+          .join(", ")} 쿠폰을 보냈습니다.`
+      );
+      resolve(undefined);
+    }, 1000);
+  });
+}
+
+// 함수형 사고 아님.
+async function main() {
+  const coupons = await fetchCoupons();
+  const subscribers = await fetchSubscribers();
+
+  for await (const subscriber of subscribers) {
+    if (subscriber.recommendCount >= 10) {
+      const targetCoupons = coupons.filter(
+        (coupon) => coupon.rank === COUPON_RANK.BEST
+      );
+      await sendMail({ subscriber, targetCoupons });
+    } else {
+      const targetCoupons = coupons.filter(
+        (coupon) => coupon.rank === COUPON_RANK.GOOD
+      );
+      await sendMail({ subscriber, targetCoupons });
+    }
+  }
+}
+
+main();
